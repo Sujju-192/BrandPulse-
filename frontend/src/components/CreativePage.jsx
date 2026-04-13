@@ -1,25 +1,31 @@
-import React from 'react'
-import CaptionGenerator from './CaptionGenerator'
-import PosterGenerator from './Poster'
-import AutoAudioAd from './AutoAudioAd'
+import React from 'react';
+import CaptionGenerator from './CaptionGenerator';
+import PosterGenerator from './PosterGenerator';
+import AutoAudioAd from './AutoAudioAd';
 
 export default function CreativePage() {
   return (
-    <div className="max-w-7xl mx-auto">
-
+    <div className="max-w-6xl mx-auto py-8 px-4 space-y-10">
       {/* Caption Generator Section */}
-      <div className="mb-12">
+      <section>
         <CaptionGenerator />
-      </div>
+      </section>
+
+      {/* Divider */}
+      <div className="border-t border-gray-800/50 my-2"></div>
 
       {/* Poster Generator Section */}
-      <div>
+      <section>
         <PosterGenerator />
-      </div>
+      </section>
 
-      <div>
+      {/* Divider */}
+      <div className="border-t border-gray-800/50 my-2"></div>
+
+      {/* Audio Ad Section */}
+      <section>
         <AutoAudioAd />
-      </div>
+      </section>
     </div>
-  )
+  );
 }

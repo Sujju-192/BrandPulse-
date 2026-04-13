@@ -8,27 +8,46 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Gemini Client (API KEY AUTH — IMPORTANT)
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY
-});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Health Check
 app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "Server is running",
-    timestamp: new Date().toISOString()
-  });
+  res.json({ status: "ok", message: "Server is running", timestamp: new Date().toISOString() });
 });
 
-// ================================
-// AI STRATEGY ENDPOINT (DYNAMIC)
-// ================================
+app.get("/api/influencers", async (req, res) => {
+  const { query = "fitness" } = req.query;
+
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(query)}&maxResults=12&key=${process.env.YOUTUBE_API_KEY}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("YouTube API error:", data);
+      return res.status(500).json({ error: "YouTube API failed", details: data });
+    }
+
+    const influencers = data.items.map((item, index) => ({
+      id: index + 1,
+      name: item.snippet.title,
+      handle: "@" + item.snippet.channelTitle.replace(/\s+/g, "").toLowerCase(),
+      category: query,
+      rating: (4 + Math.random()).toFixed(1),
+      minBudget: Math.floor(Math.random() * 2000) + 1000,
+      thumbnail: item.snippet.thumbnails.medium.url,
+    }));
+
+    res.json(influencers);
+  } catch (err) {
+    console.error("Backend error:", err);
+    res.status(500).json({ error: "Failed to fetch influencers", message: err.message });
+  }
+});
+
 app.post("/ai-text", async (req, res) => {
   try {
     const {
@@ -41,13 +60,13 @@ app.post("/ai-text", async (req, res) => {
       budgetRange,
       tone,
       uniqueValue,
-      callToAction
+      callToAction,
     } = req.body;
 
     if (!brandName || !productOrService || !goal) {
       return res.status(400).json({
         success: false,
-        message: "brandName, productOrService, and goal are required"
+        message: "brandName, productOrService, and goal are required",
       });
     }
 
@@ -119,14 +138,12 @@ Return JSON with EXACT structure:
 }
 `;
 
-    // Gemini Call
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompt
+      contents: prompt,
     });
 
     const aiText = response.text || "{}";
-
     let strategy;
     try {
       strategy = JSON.parse(aiText);
@@ -134,26 +151,24 @@ Return JSON with EXACT structure:
       return res.status(500).json({
         success: false,
         message: "Failed to parse AI response",
-        rawResponse: aiText
+        rawResponse: aiText,
       });
     }
 
-    return res.json({
+    res.json({
       success: true,
       message: "Campaign strategy generated successfully",
-      data: strategy
+      data: strategy,
     });
-
   } catch (error) {
     console.error("Gemini AI Error:", error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Internal server error while generating campaign strategy"
+      message: "Internal server error while generating campaign strategy",
     });
   }
 });
 
-// Start Server
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(`📋 Health: http://localhost:${PORT}/health`);
