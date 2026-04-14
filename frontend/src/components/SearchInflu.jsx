@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   Search, Users, Mail, Youtube, Instagram, 
   ExternalLink, Copy, CheckCircle, Sparkles,
   Filter, TrendingUp, MessageSquare, Globe,
   Share2, Heart, Zap, Loader2
 } from "lucide-react";
+import { useIdeas } from "../context/IdeaContext";
 
 export default function InfluencerFinder() {
   const [niche, setNiche] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
@@ -20,12 +22,20 @@ export default function InfluencerFinder() {
   const [sortBy, setSortBy] = useState("followers_desc");
   const [nextPageToken, setNextPageToken] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const { ideas, selectedIdea, selectedIdeaId, setSelectedIdeaId } = useIdeas();
+
+  useEffect(() => {
+    if (selectedIdea && !niche.trim()) {
+      setNiche(selectedIdea.productService || selectedIdea.goal || "");
+    }
+  }, [selectedIdea, niche]);
 
   const searchInfluencers = async (pageToken = null, append = false) => {
     if (!niche.trim()) return;
 
     if (!append) setLoading(true);
     else setLoadingMore(true);
+    setError("");
 
     try {
       const res = await fetch("http://localhost:4003/api/influencers", {
@@ -40,6 +50,11 @@ export default function InfluencerFinder() {
         }),
       });
 
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Failed to fetch influencers (HTTP ${res.status})`);
+      }
+
       const data = await res.json();
       const newInfluencers = data.influencers || [];
 
@@ -52,6 +67,11 @@ export default function InfluencerFinder() {
       setNextPageToken(data.nextPageToken || null);
     } catch (err) {
       console.error(err);
+      setError(err.message || "Failed to fetch influencers");
+      if (!append) {
+        setResults([]);
+        setHasSearched(true);
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -76,8 +96,8 @@ export default function InfluencerFinder() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           influencer,
-          product: "AI Marketing Platform",
-          brand: "BrandPulse",
+          product: selectedIdea?.productService || "AI Marketing Platform",
+          brand: selectedIdea?.brandName || "BrandPulse",
         }),
       });
       const data = await res.json();
@@ -154,13 +174,36 @@ export default function InfluencerFinder() {
             </div>
           </div>
 
+          {/* Shared Idea Selector */}
+          <div className="mb-4">
+            <label className="block text-sm text-gray-400 mb-2">Active saved idea</label>
+            <select
+              value={selectedIdeaId || ""}
+              onChange={(e) => {
+                const nextId = e.target.value;
+                setSelectedIdeaId(nextId);
+                const nextIdea = ideas.find((idea) => idea.id === nextId);
+                if (nextIdea) {
+                  setNiche(nextIdea.productService || nextIdea.goal || "");
+                }
+              }}
+              className="w-full bg-gray-900/50 border border-gray-800 rounded-xl px-3 py-2"
+            >
+              {ideas.map((idea) => (
+                <option key={idea.id} value={idea.id}>
+                  {idea.brandName} - {idea.productService}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Row 1: Niche + Search */}
           <div className="flex gap-3 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                placeholder="e.g. fitness, skincare, tech startups, gaming..."
+                placeholder={selectedIdea ? `e.g. ${selectedIdea.productService}` : "e.g. fitness, skincare, tech startups, gaming..."}
                 value={niche}
                 onChange={(e) => setNiche(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -222,6 +265,11 @@ export default function InfluencerFinder() {
 
         {/* Results Section */}
         <div className="mb-8">
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-red-900/20 border border-red-800/30 text-red-300 text-sm">
+              {error}
+            </div>
+          )}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold">

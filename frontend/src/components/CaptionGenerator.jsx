@@ -8,7 +8,7 @@ import {
   ExternalLink, BarChart, HashIcon, Globe
 } from 'lucide-react';
 
-export default function CaptionGenerator() {
+export default function CaptionGenerator({ selectedIdea }) {
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,22 +16,17 @@ export default function CaptionGenerator() {
   const [copiedItem, setCopiedItem] = useState(null);
   const [activeTab, setActiveTab] = useState('instagram');
   
-  const savedCaptionTemplates = [
-    {
-      id: 1,
-      title: 'Eco-Friendly Home Brand',
-      description: 'Sustainable products • Tree planting • Professional tone',
-      prompt: 'Generate marketing content for an eco-friendly home decor brand called EcoNest. Focus on sustainability, carbon-neutral products, and tree planting with every purchase.',
-      serviceType: 'captions'
-    },
-    {
-      id: 2,
-      title: 'Fitness App Launch',
-      description: 'Workout tracking • Community • Inspirational',
-      prompt: 'Create content for launching a new fitness app. Focus on workout tracking, community features, and health transformation stories.',
-      serviceType: 'captions'
-    }
-  ];
+  const savedCaptionTemplates = selectedIdea
+    ? [
+        {
+          id: selectedIdea.id,
+          title: selectedIdea.brandName,
+          description: `${selectedIdea.productService} • ${selectedIdea.goal} • ${selectedIdea.tone}`,
+          prompt: `Generate marketing content for ${selectedIdea.brandName}, offering ${selectedIdea.productService}. Target audience: ${selectedIdea.targetAudience}. Goal: ${selectedIdea.goal}. Platforms: ${selectedIdea.platforms.join(", ")}. Tone: ${selectedIdea.tone}. Budget: ${selectedIdea.budgetRange}.`,
+          serviceType: "captions",
+        },
+      ]
+    : [];
 
   const handleGenerateContent = async (inputData) => {
     if (!inputData.prompt) {
@@ -210,7 +205,7 @@ export default function CaptionGenerator() {
             savedIdeas={savedCaptionTemplates}
             serviceType="captions"
             generateButtonText="Generate Marketing Content"
-            ideasTitle="Select from templates"
+            ideasTitle="Use selected saved idea"
           />
         </div>
 

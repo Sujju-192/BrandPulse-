@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Download, Loader2, AlertCircle } from "lucide-react";
 
-export default function PosterGenerator() {
+export default function PosterGenerator({ selectedIdea }) {
   const [prompt, setPrompt] = useState(
     `subtle marketing poster for apple brand campaign,
 bold energetic style, neon green and black,
@@ -13,6 +13,13 @@ professional graphic design, instagram ad poster`
   const [error, setError] = useState(null);
   const [width, setWidth] = useState(768);
   const [height, setHeight] = useState(1024);
+
+  useEffect(() => {
+    if (!selectedIdea) return;
+    setPrompt(
+      `Marketing poster for ${selectedIdea.brandName} promoting ${selectedIdea.productService}. Tone: ${selectedIdea.tone}. Audience: ${selectedIdea.targetAudience}. Goal: ${selectedIdea.goal}. Clean modern ad design, high contrast, social media ready.`
+    );
+  }, [selectedIdea]);
 
   const generatePoster = async () => {
     if (!prompt.trim()) {

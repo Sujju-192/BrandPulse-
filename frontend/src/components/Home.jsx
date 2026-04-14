@@ -1,6 +1,6 @@
 // pages/Home.jsx
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Rocket, 
   Lightbulb, 
@@ -15,42 +15,42 @@ import {
   Home as HomeIcon,
   Plus,
   Palette,
-  Handshake, 
-  Sparkles
+  Handshake
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const navItems = [
     {
       id: 'add-idea',
       title: 'Your Ideas',
       icon: <Lightbulb className="w-5 h-5" />,
-      path: '/add-idea',
+      path: '/app/add-idea',
       description: 'Submit new campaign ideas'
     },
     {
       id: 'strategy',
       title: 'Strategy',
       icon: <Target className="w-5 h-5" />,
-      path: '/strategy',
+      path: '/app/strategy',
       description: 'Strategy planning & analysis'
     },
     {
       id: 'creative',
       title: 'Creativity Area',
       icon: <Palette className="w-5 h-5" />,
-      path: '/creative',
+      path: '/app/creative',
       description: 'Quick AI prompt generation'
     },
     {
       id: 'influencers',
       title: 'Find Influencers',
       icon: <Handshake  className="w-5 h-5" />,
-      path: '/influencers',
+      path: '/app/influencers',
       description: 'Manage influencer campaigns'
     },
     // {
@@ -169,27 +169,17 @@ const Home = () => {
           })}
         </div>
 
-        {/* Quick Stats */}
+        {/* Sidebar Footer */}
         <div className="p-4 border-t border-gray-800">
-          <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800">
-            <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
-              <Sparkles className="w-4 h-4" />
-              Quick Stats
-            </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Active Ideas</span>
-                <span className="text-sm font-medium text-green-400">12</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Prompts Today</span>
-                <span className="text-sm font-medium">8</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Success Rate</span>
-                <span className="text-sm font-medium text-purple-400">94%</span>
-              </div>
-            </div>
+          <div className="mb-4 p-3 bg-gray-900/60 border border-gray-800 rounded-xl">
+            <div className="text-sm font-semibold truncate">{user?.displayName || "Campaign User"}</div>
+            <div className="text-xs text-gray-400 truncate">{user?.email}</div>
+            <button
+              onClick={logout}
+              className="mt-3 w-full px-3 py-2 text-sm rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+            >
+              Log out
+            </button>
           </div>
         </div>
       </aside>

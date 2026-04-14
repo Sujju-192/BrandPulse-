@@ -1,9 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   Sparkles, Target, Users, BarChart, Globe, Zap, Rocket,
   Palette, MessageSquare, Search, ArrowRight, Star, TrendingUp, Shield, Cpu, Menu, X
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 // Animated counter component (plain JS)
 const AnimatedCounter = ({ value, suffix = '' }) => {
@@ -149,9 +151,25 @@ const StaggeredCard = ({ children, className = "" }) => (
 
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
+  const navigate = useNavigate();
+  const { user, signInWithGoogle } = useAuth();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setSigningIn(true);
+      await signInWithGoogle();
+      navigate("/app");
+    } catch (error) {
+      console.error("Google sign-in failed", error);
+      alert("Google login failed. Please try again.");
+    } finally {
+      setSigningIn(false);
+    }
+  };
   
   const stats = [
     { value: '10K+', label: 'Campaigns Launched', icon: <Rocket className="w-4 h-4" />, color: "from-purple-500 to-pink-500" },
@@ -250,8 +268,11 @@ export default function Landing() {
             ))}
           </div>
           
-          <MagneticButton className="hidden lg:block px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-medium flex items-center gap-2 group">
-            Get Started
+          <MagneticButton
+            onClick={() => (user ? navigate("/app") : handleGoogleSignIn())}
+            className="hidden lg:block px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-medium flex items-center gap-2 group"
+          >
+            {user ? "Go to Dashboard" : (signingIn ? "Signing in..." : "Login with Google")}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </MagneticButton>
           
@@ -277,8 +298,11 @@ export default function Landing() {
                     {item}
                   </a>
                 ))}
-                <button className="px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 font-medium flex items-center justify-center gap-2 group">
-                  Get Started
+                <button
+                  onClick={() => (user ? navigate("/app") : handleGoogleSignIn())}
+                  className="px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 font-medium flex items-center justify-center gap-2 group"
+                >
+                  {user ? "Go to Dashboard" : (signingIn ? "Signing in..." : "Login with Google")}
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -330,9 +354,12 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
           >
-            <MagneticButton className="px-8 py-3.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-xl hover:shadow-purple-900/30 transition-all duration-300 text-lg font-medium flex items-center gap-3 group">
+            <MagneticButton
+              onClick={() => (user ? navigate("/app") : handleGoogleSignIn())}
+              className="px-8 py-3.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-xl hover:shadow-purple-900/30 transition-all duration-300 text-lg font-medium flex items-center gap-3 group"
+            >
               <Sparkles className="w-5 h-5" />
-              Start Free Trial
+              {user ? "Continue to App" : (signingIn ? "Signing in..." : "Login with Google")}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </MagneticButton>
             <motion.button 
@@ -519,9 +546,12 @@ export default function Landing() {
                 Join forward-thinking businesses already accelerating with AI-powered campaigns.
               </motion.p>
               
-              <MagneticButton className="px-10 py-4 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-2xl hover:shadow-purple-900/40 transition-all duration-300 text-lg font-medium flex items-center gap-3 mx-auto group">
+              <MagneticButton
+                onClick={() => (user ? navigate("/app") : handleGoogleSignIn())}
+                className="px-10 py-4 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-2xl hover:shadow-purple-900/40 transition-all duration-300 text-lg font-medium flex items-center gap-3 mx-auto group"
+              >
                 <Rocket className="w-5 h-5" />
-                Start Your 14-Day Free Trial
+                {user ? "Go to Dashboard" : (signingIn ? "Signing in..." : "Login with Google")}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
               </MagneticButton>
               

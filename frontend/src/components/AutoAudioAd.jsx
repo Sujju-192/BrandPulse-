@@ -1,22 +1,30 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { 
   Music, Volume2, Download, Play, Pause, Sparkles,
   Building2, Package, Loader2, Headphones,
   Share2, Copy, CheckCircle, Radio, AlertCircle
 } from "lucide-react";
 
-export default function AutoAudioAd() {
+export default function AutoAudioAd({ selectedIdea }) {
   const [company, setCompany] = useState("");
   const [product, setProduct] = useState("");
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioDuration, setAudioDuration] = useState("0:00");
+  const [currentTime, setCurrentTime] = useState(0);
+  const [durationSeconds, setDurationSeconds] = useState(0);
   const [copied, setCopied] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [error, setError] = useState(null);
   
   const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (!selectedIdea) return;
+    setCompany(selectedIdea.brandName || "");
+    setProduct(selectedIdea.productService || "");
+  }, [selectedIdea]);
 
   const generateAd = async () => {
     if (!company || !product) {
@@ -29,6 +37,9 @@ export default function AutoAudioAd() {
     setAudioUrl(null);
     setHasGenerated(true);
     setIsPlaying(false);
+    setCurrentTime(0);
+    setDurationSeconds(0);
+    setAudioDuration("0:00");
 
     try {
       const res = await fetch("http://localhost:4001/api/audio/auto-ad", {
@@ -68,11 +79,28 @@ export default function AutoAudioAd() {
     setIsPlaying(!isPlaying);
   };
 
+  const formatTime = (seconds) => {
+    const safeSeconds = Number.isFinite(seconds) ? seconds : 0;
+    const minutes = Math.floor(safeSeconds / 60);
+    const secs = Math.floor(safeSeconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
+
   const handleAudioLoaded = (e) => {
     const duration = e.target.duration;
-    const minutes = Math.floor(duration / 60);
-    const seconds = Math.floor(duration % 60);
-    setAudioDuration(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+    setDurationSeconds(duration || 0);
+    setAudioDuration(formatTime(duration || 0));
+  };
+
+  const handleTimeUpdate = (e) => {
+    setCurrentTime(e.target.currentTime || 0);
+  };
+
+  const handleSeek = (e) => {
+    if (!audioRef.current) return;
+    const nextTime = Number(e.target.value);
+    audioRef.current.currentTime = nextTime;
+    setCurrentTime(nextTime);
   };
 
   const copyPrompt = () => {
@@ -87,6 +115,9 @@ export default function AutoAudioAd() {
       generateAd();
     }
   };
+
+  const progressPercent =
+    durationSeconds > 0 ? Math.min((currentTime / durationSeconds) * 100, 100) : 0;
 
   return (
     <div className="w-full bg-gradient-to-br from-gray-900/50 to-gray-800/20 rounded-2xl border border-gray-800 overflow-hidden">
@@ -194,10 +225,24 @@ export default function AutoAudioAd() {
                 <div className="flex-1">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="font-medium">{company} Ad</span>
-                    <span className="text-gray-400 text-xs">{audioDuration}</span>
+                    <span className="text-gray-400 text-xs">
+                      {formatTime(currentTime)} / {audioDuration}
+                    </span>
                   </div>
-                  <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <div className="h-full w-1/2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"></div>
+                  <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden relative">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-150"
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={durationSeconds || 0}
+                      step={0.1}
+                      value={currentTime}
+                      onChange={handleSeek}
+                      className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                    />
                   </div>
                 </div>
               </div>
@@ -205,6 +250,7 @@ export default function AutoAudioAd() {
                 ref={audioRef}
                 src={audioUrl}
                 onLoadedMetadata={handleAudioLoaded}
+                onTimeUpdate={handleTimeUpdate}
                 onEnded={() => setIsPlaying(false)}
                 className="hidden"
               />

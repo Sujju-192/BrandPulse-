@@ -26,7 +26,8 @@ if (!ELEVEN_KEY) {
 const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
 
 // ElevenLabs Voice
-const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel
+// Use a configurable voice id so free-plan users can switch to an allowed voice.
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "EXAVITQu4vr4xnSDxMaL";
 
 
 // ----------------------------
@@ -108,6 +109,11 @@ Write only the script text, no additional commentary.`;
     if (!voiceResp.ok) {
       const errorText = await voiceResp.text();
       console.error("❌ ElevenLabs API error:", voiceResp.status, errorText);
+      if (voiceResp.status === 402) {
+        throw new Error(
+          "ElevenLabs rejected this voice for your plan. Set ELEVENLABS_VOICE_ID in .env to a free-plan compatible voice from your account."
+        );
+      }
       throw new Error(`ElevenLabs audio generation failed: ${voiceResp.statusText}`);
     }
 

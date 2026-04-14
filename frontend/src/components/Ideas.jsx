@@ -6,30 +6,49 @@ import {
   ChevronDown, MessageSquare, BarChart, Save,
   Copy  // ← Added for Discuss modal
 } from 'lucide-react';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
+import { useIdeas } from "../context/IdeaContext";
 
 export default function Ideas() {
-  const [ideas, setIdeas] = useState(() => {
-    const saved = localStorage.getItem('campaignIdeas');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 1,
-        brandName: 'TechFlow',
-        productService: 'AI Productivity Tool',
-        targetAudience: 'Tech professionals aged 25-40, remote workers',
-        goal: 'Leads',
-        platforms: ['LinkedIn', 'Twitter/X'],
-        budgetRange: 'INR.2,000 - INR.5,000',
-        tone: 'Professional',
-        date: '2024-01-15',
-        status: 'Active'
-      },
-      // Add your other sample ideas here if needed
-    ];
-  });
+  const [ideas, setIdeas] = useState([]);
+  const { user } = useAuth();
+  const { selectedIdeaId, setSelectedIdeaId } = useIdeas();
 
   useEffect(() => {
-    localStorage.setItem('campaignIdeas', JSON.stringify(ideas));
-  }, [ideas]);
+    if (!user?.uid) return;
+
+    const ideasRef = collection(db, "ideas");
+    const q = query(ideasRef, where("uid", "==", user.uid));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((ideaDoc) => ({
+        id: ideaDoc.id,
+        ...ideaDoc.data(),
+      }));
+
+      data.sort((a, b) => {
+        const aDate = a.createdAt?.seconds || 0;
+        const bDate = b.createdAt?.seconds || 0;
+        return bDate - aDate;
+      });
+
+      setIdeas(data);
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   // Form state for adding
   const [formData, setFormData] = useState({
@@ -84,7 +103,7 @@ export default function Ideas() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
     if (!formData.brandName.trim()) newErrors.brandName = 'Brand name is required';
@@ -101,12 +120,14 @@ export default function Ideas() {
     }
 
     const newIdea = {
-      id: Date.now(),
       ...formData,
       date: new Date().toISOString().split('T')[0],
-      status: 'Pending'
+      status: 'Pending',
+      uid: user.uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
-    setIdeas([newIdea, ...ideas]);
+    await addDoc(collection(db, "ideas"), newIdea);
     setShowSuccess(true);
     setFormData({
       brandName: '',
@@ -142,9 +163,12 @@ export default function Ideas() {
     }));
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editFormData.brandName.trim()) return;
-    setIdeas(ideas.map(idea => idea.id === editingIdea.id ? editFormData : idea));
+    const ideaRef = doc(db, "ideas", editingIdea.id);
+    const { id, ...ideaWithoutId } = editFormData;
+    const payload = { ...ideaWithoutId, updatedAt: serverTimestamp() };
+    await updateDoc(ideaRef, payload);
     setShowEditModal(false);
     setEditingIdea(null);
     setEditFormData(null);
@@ -172,9 +196,9 @@ export default function Ideas() {
   };
 
   // ========== DELETE IDEA ==========
-  const handleDeleteIdea = (id) => {
+  const handleDeleteIdea = async (id) => {
     if (window.confirm('Are you sure you want to delete this idea?')) {
-      setIdeas(ideas.filter(idea => idea.id !== id));
+      await deleteDoc(doc(db, "ideas", id));
     }
   };
 
@@ -229,6 +253,9 @@ export default function Ideas() {
             <h1 className="text-3xl font-bold">Business Ideas</h1>
             <p className="text-gray-400">Manage and create new marketing campaign ideas</p>
           </div>
+        </div>
+        <div className="text-sm text-purple-300 bg-purple-900/20 border border-purple-800/40 rounded-xl px-3 py-2 inline-block">
+          Active idea is shared across Strategy, Creative Area, and Find Influencers.
         </div>
       </div>
 
@@ -514,6 +541,17 @@ export default function Ideas() {
                       <p className="text-gray-400">{idea.productService}</p>
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => setSelectedIdeaId(idea.id)}
+                        className={`px-2 py-1 rounded-lg text-xs border ${
+                          selectedIdeaId === idea.id
+                            ? "bg-purple-900/30 border-purple-500 text-purple-300"
+                            : "bg-gray-900/50 border-gray-700 text-gray-300 hover:border-purple-500/40"
+                        }`}
+                        title="Use this idea in all tabs"
+                      >
+                        {selectedIdeaId === idea.id ? "Active Idea" : "Set Active"}
+                      </button>
                       <button onClick={() => openEditModal(idea)} className="p-2 hover:bg-blue-900/20 text-blue-400 hover:text-blue-300 rounded-lg transition-colors" title="Edit">
                         <Edit className="w-4 h-4" />
                       </button>

@@ -33,11 +33,20 @@ app.post("/api/influencers", async (req, res) => {
     return res.status(400).json({ error: "Niche is required" });
   }
 
+  if (!YT_KEY) {
+    return res.status(500).json({ error: "YOUTUBE_API_KEY is missing in backend .env" });
+  }
+
   try {
     // 1. Search YouTube channels
     const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=${maxResults}&q=${encodeURIComponent(niche)}&key=${YT_KEY}${pageToken ? `&pageToken=${pageToken}` : ''}`;
     const searchRes = await fetch(searchUrl);
     const searchData = await searchRes.json();
+
+    if (!searchRes.ok || searchData.error) {
+      const apiMessage = searchData?.error?.message || "YouTube search API request failed";
+      return res.status(502).json({ error: `YouTube API error: ${apiMessage}` });
+    }
 
     if (!searchData.items || searchData.items.length === 0) {
       return res.json({ influencers: [], nextPageToken: null });
@@ -47,6 +56,11 @@ app.post("/api/influencers", async (req, res) => {
     const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${channelIds}&key=${YT_KEY}`;
     const channelRes = await fetch(channelUrl);
     const channelData = await channelRes.json();
+
+    if (!channelRes.ok || channelData.error) {
+      const apiMessage = channelData?.error?.message || "YouTube channels API request failed";
+      return res.status(502).json({ error: `YouTube API error: ${apiMessage}` });
+    }
 
     let influencers = channelData.items.map(c => {
       const desc = c.snippet.description || "";

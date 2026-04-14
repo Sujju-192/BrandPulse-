@@ -2,44 +2,25 @@ import React, { useState, useEffect } from 'react';
 import Input from './Input';
 import CampaignStrategyDashboard from './CampaignStrategyDashboard';
 import { Target, Sparkles, AlertCircle } from 'lucide-react';
+import { useIdeas } from "../context/IdeaContext";
 
 export default function Strategy() {
   const [strategy, setStrategy] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activePrompt, setActivePrompt] = useState('');
+  const { ideas } = useIdeas();
   const [savedIdeas, setSavedIdeas] = useState([]);
 
-  // Load saved ideas from localStorage
   useEffect(() => {
-    const loadSavedIdeas = () => {
-      try {
-        const ideasData = localStorage.getItem('campaignIdeas');
-        if (ideasData) {
-          const parsedIdeas = JSON.parse(ideasData);
-          const formattedIdeas = parsedIdeas.map(idea => ({
-            id: idea.id,
-            title: idea.brandName,
-            description: `${idea.productService} • ${idea.goal} • ${idea.budgetRange}`,
-            prompt: `Create a marketing campaign for ${idea.brandName}, which offers ${idea.productService}. Target audience: ${idea.targetAudience}. Primary goal: ${idea.goal}. Recommended platforms: ${idea.platforms.join(', ')}. Brand tone: ${idea.tone}. Budget range: ${idea.budgetRange}.`
-          }));
-          setSavedIdeas(formattedIdeas);
-        }
-      } catch (error) {
-        console.error('Error loading ideas:', error);
-      }
-    };
-
-    loadSavedIdeas();
-    
-    // Listen for storage changes (when new ideas are added)
-    const handleStorageChange = () => {
-      loadSavedIdeas();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    const formattedIdeas = ideas.map((idea) => ({
+      id: idea.id,
+      title: idea.brandName,
+      description: `${idea.productService} • ${idea.goal} • ${idea.budgetRange}`,
+      prompt: `Create a marketing campaign for ${idea.brandName}, which offers ${idea.productService}. Target audience: ${idea.targetAudience}. Primary goal: ${idea.goal}. Recommended platforms: ${idea.platforms.join(", ")}. Brand tone: ${idea.tone}. Budget range: ${idea.budgetRange}.`,
+    }));
+    setSavedIdeas(formattedIdeas);
+  }, [ideas]);
 
   // Function to extract structured data from prompt
   const extractDataFromPrompt = (promptText) => {
