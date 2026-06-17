@@ -80,11 +80,14 @@ export default function Strategy() {
       const requestBody = extractDataFromPrompt(content.prompt);
       console.log("Sending to backend:", requestBody);
       
-      const res = await fetch("/ai-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/ai-text`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        }
+      );
 
       if (!res.ok) {
         const errorText = await res.text();

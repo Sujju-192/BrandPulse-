@@ -40,15 +40,18 @@ export default function CaptionGenerator({ selectedIdea }) {
     setCopiedItem(null);
 
     try {
-      const response = await fetch('/api/captions/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: inputData.prompt,
-          serviceType: 'captions',
-          tone: selectedTone
-        })
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/captions/generate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: inputData.prompt,
+            serviceType: 'captions',
+            tone: selectedTone
+          })
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

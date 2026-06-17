@@ -38,7 +38,7 @@ export default function InfluencerFinder() {
     setError("");
 
     try {
-      const res = await fetch("/api/influencers", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/influencers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ export default function InfluencerFinder() {
   const generateOutreachEmail = async (influencer) => {
     setEmailLoading(true);
     try {
-      const res = await fetch("/api/outreach-email", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/outreach-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
