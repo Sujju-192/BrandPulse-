@@ -3,13 +3,13 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA0q9bnWYqiY39LRX7iEk42VKIsS565eyo",
-  authDomain: "campaignai-e9ddd.firebaseapp.com",
-  projectId: "campaignai-e9ddd",
-  storageBucket: "campaignai-e9ddd.firebasestorage.app",
-  messagingSenderId: "473495825747",
-  appId: "1:473495825747:web:1957fcf6e5cdc26ca585a6",
-  measurementId: "G-BY4TK45LVX",
+  apiKey: "AIzaSyB-xqnpjE82VmL76okn6VaklNmfn8O3Hi4",
+  authDomain: "brandpulse-38830.firebaseapp.com",
+  projectId: "brandpulse-38830",
+  storageBucket: "brandpulse-38830.firebasestorage.app",
+  messagingSenderId: "89079649163",
+  appId: "1:89079649163:web:eb2cf33e25295ace7b958e",
+  measurementId: "G-CJFYQ2SK81",
 };
 
 const app = initializeApp(firebaseConfig);
