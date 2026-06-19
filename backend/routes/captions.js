@@ -12,7 +12,7 @@ function normalizeContent(parsed) {
   };
 }
 
-router.post(`${import.meta.env.VITE_API_URL}/api/captions/generate`, async (req, res) => {
+router.post(`/api/captions/generate`, async (req, res) => {
   try {
     const { prompt, tone = "professional", serviceType = "general" } = req.body;
 

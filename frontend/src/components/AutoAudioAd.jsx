@@ -42,7 +42,7 @@ export default function AutoAudioAd({ selectedIdea }) {
     setAudioDuration("0:00");
 
     try {
-      const res = await fetch("/api/audio/auto-ad", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/audio/auto-ad`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ company, product }),
